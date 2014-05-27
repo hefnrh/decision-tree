@@ -1,9 +1,6 @@
 package com.nibonn.decision.tree;
 
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -23,6 +20,8 @@ public class DecisionTreeTest {
     private static DecisionTree.DecisionTreeBuilder builder;
     private static File testFile;
     private static Double[][] testData;
+    private static Object node;
+    private static Class c;
 
     public static void generateTestData() throws FileNotFoundException {
         Random r = new Random();
@@ -39,10 +38,18 @@ public class DecisionTreeTest {
     }
 
     @BeforeClass
-    public static void setup() throws FileNotFoundException {
+    public static void setup() throws FileNotFoundException, ClassNotFoundException {
         builder = new DecisionTree.DecisionTreeBuilder();
         testFile = new File("testdata.txt");
         generateTestData();
+        c = Class.forName("com.nibonn.decision.tree.DecisionTree$Node");
+    }
+
+    @Before
+    public void setupNode() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+        Constructor cons = c.getDeclaredConstructor();
+        cons.setAccessible(true);
+        node = cons.newInstance();
     }
 
     @Test
@@ -58,19 +65,30 @@ public class DecisionTreeTest {
     }
 
     @Test
-    public void testNodeGini() throws ClassNotFoundException, IllegalAccessException, InstantiationException, NoSuchFieldException, NoSuchMethodException, InvocationTargetException {
-        Class c = Class.forName("com.nibonn.decision.tree.DecisionTree$Node");
-        Constructor cons = c.getDeclaredConstructor(DecisionTree.class);
-        cons.setAccessible(true);
-        Constructor out = DecisionTree.class.getDeclaredConstructor();
-        out.setAccessible(true);
-        Object node = cons.newInstance(out.newInstance());
+    public void testNodeGini() throws IllegalAccessException, NoSuchFieldException, NoSuchMethodException, InvocationTargetException {
         List<Double[]> l = new LinkedList<>();
         l.add(new Double[]{2.5});
         l.add(new Double[]{5.0});
         l.add(new Double[]{5.0});
         c.getDeclaredField("data").set(node, l);
-        Assert.assertEquals(1 - 1 / 9.0 - 4 / 9.0, (double) c.getDeclaredMethod("gini").invoke(node), 0.01);
+        Assert.assertEquals(1 - 1 / 9.0 - 4 / 9.0, (double) c.getDeclaredMethod("gini").invoke(node), 0);
+    }
+
+    @Test
+    public void testNodeFindMinGiniSplitPos() throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+        List<Double[]> l = new LinkedList<>();
+        l.add(new Double[]{8.0, 1.0});
+        l.add(new Double[]{5.0, 1.0});
+        l.add(new Double[]{2.5, 0.0});
+        l.add(new Double[]{6.5, 1.0});
+        l.add(new Double[]{3.5, 0.0});
+        l.add(new Double[]{0.5, 0.0});
+        l.add(new Double[]{9.5, 1.0});
+        l.add(new Double[]{1.5, 0.0});
+        l.add(new Double[]{4.5, 0.0});
+        l.add(new Double[]{7.5, 1.0});
+        c.getDeclaredField("data").set(node, l);
+        Assert.assertEquals(5, (int) c.getDeclaredMethod("findMinGiniSplitPos", int.class).invoke(node, 0));
     }
 
     @AfterClass
