@@ -3,8 +3,8 @@ package com.nibonn.decision.tree;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RecursiveAction;
 
 /**
  * Hello world!
@@ -17,7 +17,6 @@ public class DecisionTree {
     private Node root;
 
     private DecisionTree() {
-        root = new Node();
     }
 
     public static class DecisionTreeBuilder {
@@ -40,26 +39,32 @@ public class DecisionTree {
 
         public DecisionTree build() {
             DecisionTree tree = new DecisionTree();
-            Node n = new Node();
+            Node n = new Node(0);
             n.data = Arrays.asList(data);
             tree.root = n;
-            n.split();
+            ForkJoinPool pool = new ForkJoinPool();
+            pool.invoke(n);
+            pool.shutdown();
             return tree;
         }
 
     }
 
-    private static class Node {
+    private static class Node extends RecursiveAction {
 
         boolean isLeaf = false;
         Node lSon;
         Node rSon;
         List<Double[]> data;
         Map<Double, Integer> count;
-        double gini;
         double type;
         double threshold;
-        final static int MIN_SIZE = 10;
+        final static int MIN_SIZE = 1;
+        int depth;
+
+        Node(int depth) {
+            this.depth = depth;
+        }
 
         double gini() {
             if (count == null) {
@@ -75,7 +80,7 @@ public class DecisionTree {
 
         private void count() {
             count = new HashMap<>();
-            data.parallelStream().forEach(d -> {
+            data.stream().forEach(d -> {
                 if (count.containsKey(d[d.length - 1])) {
                     count.put(d[d.length - 1], count.get(d[d.length - 1]) + 1);
                 } else {
@@ -84,28 +89,39 @@ public class DecisionTree {
             });
         }
 
-        void split() {
-            ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-            split(0, pool);
-        }
-
-        private void split(int depth, ExecutorService pool) {
-            if (depth >= data.get(0).length - 1 || data.size() <= MIN_SIZE) {
-                if (count == null) {
-                    count();
+        private void split() {
+            count();
+            if (count.keySet().size() == 1 ||
+                    depth >= data.get(0).length - 1 || data.size() <= MIN_SIZE) {
+                int max = 0;
+                for (double k : count.keySet()) {
+                    if (count.get(k) > max) {
+                        max = count.get(k);
+                        type = k;
+                    }
                 }
-
+                isLeaf = true;
                 return;
             }
-            int pos = findMinGiniSplitPos(depth);
-
-
+            int pos = findMinGiniSplitPos();
+            lSon.data.clear();
+            lSon.count.clear();
+            rSon.data.clear();
+            rSon.count.clear();
+            ListIterator<Double[]> li = data.listIterator();
+            for (int i = 0; i < pos; ++i) {
+                lSon.data.add(li.next());
+            }
+            for (int i = pos, j = data.size(); i < j; ++i) {
+                rSon.data.add(li.next());
+            }
+            invokeAll(lSon, rSon);
         }
 
-        int findMinGiniSplitPos(int depth) {
+        int findMinGiniSplitPos() {
             sort(depth);
-            lSon = new Node();
-            rSon = new Node();
+            lSon = new Node(depth + 1);
+            rSon = new Node(depth + 1);
             lSon.data = new LinkedList<>();
             rSon.data = new LinkedList<>(data);
             ListIterator<Double[]> li = rSon.data.listIterator();
@@ -154,6 +170,10 @@ public class DecisionTree {
             }
         }
 
+        @Override
+        protected void compute() {
+            split();
+        }
     }
 
 }
