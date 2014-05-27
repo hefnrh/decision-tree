@@ -79,18 +79,18 @@ public class DecisionTreeTest {
     @Test
     public void testNodeFindMinGiniSplitPos() throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
         List<Double[]> l = new LinkedList<>();
-        l.add(new Double[]{8.0, 1.0});
-        l.add(new Double[]{5.0, 1.0});
-        l.add(new Double[]{2.5, 0.0});
-        l.add(new Double[]{6.5, 1.0});
-        l.add(new Double[]{3.5, 0.0});
+        l.add(new Double[]{8.0, 0.0});
+        l.add(new Double[]{5.0, 0.0});
+        l.add(new Double[]{2.5, 1.0});
+        l.add(new Double[]{6.5, 0.0});
+        l.add(new Double[]{3.5, 1.0});
         l.add(new Double[]{0.5, 0.0});
-        l.add(new Double[]{9.5, 1.0});
-        l.add(new Double[]{1.5, 0.0});
+        l.add(new Double[]{9.5, 0.0});
+        l.add(new Double[]{1.5, 1.0});
         l.add(new Double[]{4.5, 0.0});
-        l.add(new Double[]{7.5, 1.0});
+        l.add(new Double[]{7.5, 0.0});
         c.getDeclaredField("data").set(node, l);
-        Assert.assertEquals(5, (int) c.getDeclaredMethod("findMinGiniSplitPos").invoke(node));
+        Assert.assertEquals(4, (int) c.getDeclaredMethod("findMinGiniSplitPos").invoke(node));
     }
 
     @Test
