@@ -1,10 +1,14 @@
 package com.nibonn.decision.tree;
 
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.util.Random;
 
 /**
  * Unit test for simple App.
@@ -12,24 +16,49 @@ import java.io.FileNotFoundException;
 public class DecisionTreeTest {
 
     private static DecisionTree.DecisionTreeBuilder builder;
+    private static File testFile;
+    private static Double[][] testData;
 
+    public static void generateTestData() {
+        Random r = new Random();
+        testData = new Double[100 + r.nextInt(900)][100 + r.nextInt(900)];
+        PrintWriter pw = null;
+        try {
+            pw = new PrintWriter(testFile);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        for (int i = 0; i < testData.length; ++i) {
+            for (int j = 0; j < testData[i].length; ++j) {
+                testData[i][j] = r.nextDouble() * r.nextInt();
+                pw.print(testData[i][j] + " ");
+            }
+            pw.println();
+        }
+        pw.close();
+    }
     @BeforeClass
     public static void setup() {
         builder = new DecisionTree.DecisionTreeBuilder();
+        testFile = new File("testdata.txt");
+        generateTestData();
     }
 
     @Test
     public void testLoadData() {
         try {
-            builder.loadData("testdata.txt", 3, 4);
+            builder.loadData("testdata.txt", testData[0].length, testData.length);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        Assert.assertArrayEquals(new Double[]{1.0, 2.0, 3.0}, builder.getData()[0]);
-        Assert.assertArrayEquals(new Double[]{4.0, 5.0, 6.0}, builder.getData()[1]);
-        Assert.assertArrayEquals(new Double[]{7.0, 8.0, 9.0}, builder.getData()[2]);
-        Assert.assertArrayEquals(new Double[]{10.0, 11.0, 12.0}, builder.getData()[3]);
+        for (int i = 0; i < testData.length; ++i) {
+            Assert.assertArrayEquals(testData[i], builder.getData()[i]);
+        }
     }
 
+    @AfterClass
+    public static void clean() {
+        testFile.delete();
+    }
 
 }
