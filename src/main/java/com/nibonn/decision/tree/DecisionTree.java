@@ -2,6 +2,9 @@ package com.nibonn.decision.tree;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 /**
@@ -41,14 +44,31 @@ public class DecisionTree {
             return null;
         }
 
-        public Double[][] getData() {
-            return data;
-        }
     }
 
     private class Node {
         boolean isLeaf = false;
         Node lSon;
         Node rSon;
+        List<Double[]> data;
+        Map<Double, Integer> count;
+
+        double gini() {
+            if (count == null) {
+                count();
+            }
+            return 1.0 - count.values().stream().reduce((a, b) -> a * a + b * b).get() / (double) (data.size() * data.size());
+        }
+
+        void count() {
+            count = new HashMap<>();
+            data.parallelStream().forEach(d -> {
+                if (count.containsKey(d[d.length - 1])) {
+                    count.put(d[d.length - 1], count.get(d[d.length - 1]) + 1);
+                } else {
+                    count.put(d[d.length - 1], 1);
+                }
+            });
+        }
     }
 }
