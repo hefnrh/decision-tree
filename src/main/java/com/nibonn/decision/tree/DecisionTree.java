@@ -38,6 +38,9 @@ public class DecisionTree {
         }
 
         public DecisionTree build() {
+            if (data == null) {
+                return null;
+            }
             DecisionTree tree = new DecisionTree();
             Node n = new Node(0);
             n.data = Arrays.asList(data);
@@ -45,6 +48,7 @@ public class DecisionTree {
             ForkJoinPool pool = new ForkJoinPool();
             pool.invoke(n);
             pool.shutdown();
+            data = null;
             return tree;
         }
 
@@ -79,7 +83,11 @@ public class DecisionTree {
         }
 
         private void count() {
-            count = new HashMap<>();
+            if (count == null) {
+                count = new HashMap<>();
+            } else {
+                count.clear();
+            }
             data.stream().forEach(d -> {
                 if (count.containsKey(d[d.length - 1])) {
                     count.put(d[d.length - 1], count.get(d[d.length - 1]) + 1);
@@ -105,9 +113,7 @@ public class DecisionTree {
             }
             int pos = findMinGiniSplitPos();
             lSon.data.clear();
-            lSon.count.clear();
             rSon.data.clear();
-            rSon.count.clear();
             ListIterator<Double[]> li = data.listIterator();
             for (int i = 0; i < pos; ++i) {
                 lSon.data.add(li.next());
@@ -176,4 +182,7 @@ public class DecisionTree {
         }
     }
 
+    public void testData(String filename) {
+
+    }
 }
