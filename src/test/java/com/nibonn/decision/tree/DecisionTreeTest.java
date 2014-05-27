@@ -8,6 +8,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.lang.reflect.Field;
 import java.util.Random;
 
 /**
@@ -51,8 +52,18 @@ public class DecisionTreeTest {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+        Double[][] data = null;
+        try {
+            Field f = builder.getClass().getDeclaredField("data");
+            f.setAccessible(true);
+            data = (Double[][]) f.get(builder);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        }
         for (int i = 0; i < testData.length; ++i) {
-            Assert.assertArrayEquals(testData[i], builder.getData()[i]);
+            Assert.assertArrayEquals(testData[i], data[i]);
         }
     }
 
