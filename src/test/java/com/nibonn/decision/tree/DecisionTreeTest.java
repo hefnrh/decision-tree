@@ -11,6 +11,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RecursiveAction;
 
 /**
  * Unit test for simple App.
@@ -47,9 +49,9 @@ public class DecisionTreeTest {
 
     @Before
     public void setupNode() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        Constructor cons = c.getDeclaredConstructor();
+        Constructor cons = c.getDeclaredConstructor(int.class);
         cons.setAccessible(true);
-        node = cons.newInstance();
+        node = cons.newInstance(0);
     }
 
     @Test
@@ -88,7 +90,31 @@ public class DecisionTreeTest {
         l.add(new Double[]{4.5, 0.0});
         l.add(new Double[]{7.5, 1.0});
         c.getDeclaredField("data").set(node, l);
-        Assert.assertEquals(5, (int) c.getDeclaredMethod("findMinGiniSplitPos", int.class).invoke(node, 0));
+        Assert.assertEquals(5, (int) c.getDeclaredMethod("findMinGiniSplitPos").invoke(node));
+    }
+
+    @Test
+    public void testNodeSplit() throws NoSuchFieldException, IllegalAccessException {
+        List<Double[]> l = new LinkedList<>();
+        l.add(new Double[]{8.0, 0.0});
+        l.add(new Double[]{5.0, 0.0});
+        l.add(new Double[]{2.5, 1.0});
+        l.add(new Double[]{6.5, 0.0});
+        l.add(new Double[]{3.5, 0.0});
+        l.add(new Double[]{0.5, 1.0});
+        l.add(new Double[]{9.5, 0.0});
+        l.add(new Double[]{1.5, 1.0});
+        l.add(new Double[]{4.5, 1.0});
+        l.add(new Double[]{7.5, 0.0});
+        c.getDeclaredField("data").set(node, l);
+        ForkJoinPool pool = new ForkJoinPool();
+        pool.invoke((RecursiveAction) node);
+        Object lSon = c.getDeclaredField("lSon").get(node);
+        Object rSon = c.getDeclaredField("rSon").get(node);
+        Assert.assertTrue((boolean) c.getDeclaredField("isLeaf").get(lSon));
+        Assert.assertTrue((boolean) c.getDeclaredField("isLeaf").get(rSon));
+        Assert.assertEquals(1.0, (double) c.getDeclaredField("type").get(lSon), 0);
+        Assert.assertEquals(0.0, (double) c.getDeclaredField("type").get(rSon), 0);
     }
 
     @AfterClass
