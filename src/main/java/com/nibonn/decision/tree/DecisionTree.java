@@ -12,7 +12,7 @@ public class DecisionTree {
         builder.loadData(args[0], Integer.parseInt(args[1]), Integer.parseInt(args[2]));
         long startTime = System.currentTimeMillis();
         DecisionTree tree = builder.build();
-        System.out.println("build time: " + (System.currentTimeMillis() - startTime));
+        System.out.println("build time: " + (System.currentTimeMillis() - startTime) + "ms.");
         tree.testData(args[0], Integer.parseInt(args[2]));
     }
 
