@@ -6,12 +6,14 @@ import java.util.*;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
 
-/**
- * Hello world!
- */
 public class DecisionTree {
-    public static void main(String[] args) {
-        System.out.println("Hello World!");
+    public static void main(String[] args) throws FileNotFoundException {
+        DecisionTreeBuilder builder = new DecisionTreeBuilder();
+        builder.loadData(args[0], Integer.parseInt(args[1]), Integer.parseInt(args[2]));
+        long startTime = System.currentTimeMillis();
+        DecisionTree tree = builder.build();
+        System.out.println("build time: " + (System.currentTimeMillis() - startTime));
+        tree.testData(args[0], Integer.parseInt(args[2]));
     }
 
     private Node root;
@@ -97,21 +99,29 @@ public class DecisionTree {
             });
         }
 
+        private void toLeaf() {
+            int max = 0;
+            for (double k : count.keySet()) {
+                if (count.get(k) > max) {
+                    max = count.get(k);
+                    type = k;
+                }
+            }
+            isLeaf = true;
+        }
+
         private void split() {
             count();
             if (count.keySet().size() == 1 ||
                     depth >= data.get(0).length - 1 || data.size() <= MIN_SIZE) {
-                int max = 0;
-                for (double k : count.keySet()) {
-                    if (count.get(k) > max) {
-                        max = count.get(k);
-                        type = k;
-                    }
-                }
-                isLeaf = true;
+                toLeaf();
                 return;
             }
             int pos = findMinGiniSplitPos();
+            if (pos == 0 || pos == data.size()) {
+                toLeaf();
+                return;
+            }
             lSon.data.clear();
             rSon.data.clear();
             ListIterator<Double[]> li = data.listIterator();
@@ -180,9 +190,38 @@ public class DecisionTree {
         protected void compute() {
             split();
         }
+
+        Node belongTo(double[] d) {
+            return d[depth] <= threshold ? lSon : rSon;
+        }
     }
 
-    public void testData(String filename) {
+    public void testData(String filename, int num) throws FileNotFoundException {
+        Scanner in = new Scanner(new File(filename));
+        final int DIMEN = root.data.get(0).length;
+        double[][] testData = new double[num][DIMEN];
+        for (int i = 0; i < num; ++i) {
+            for (int j = 0; j < DIMEN; ++j) {
+                testData[i][j] = in.nextDouble();
+            }
+            in.nextLine();
+        }
+        in.close();
 
+        int errCount = 0;
+        for (int i = 0; i < num; ++i) {
+            if (testData[i][DIMEN - 1] != classify(testData[i])) {
+                ++errCount;
+            }
+        }
+        System.out.println("error: " + errCount + " / " + num);
+    }
+
+    public double classify(double[] record) {
+        Node now = root;
+        while (!now.isLeaf) {
+            now = now.belongTo(record);
+        }
+        return now.type;
     }
 }
