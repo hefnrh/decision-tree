@@ -219,15 +219,11 @@ public class DecisionTree {
         in.close();
 
         int errCount = 0;
-        int critical = 0;
         Map<Double, Integer> map = new HashMap<>();
         for (int i = 0; i < num; ++i) {
             double res = classify(testData[i]);
             if (testData[i][DIMEN - 1] != res) {
                 ++errCount;
-                if (testData[i][DIMEN - 1] == 1.0) {
-                    ++critical;
-                }
             }
             if (map.containsKey(res)) {
                 map.put(res, map.get(res) + 1);
@@ -235,7 +231,7 @@ public class DecisionTree {
                 map.put(res, 1);
             }
         }
-        System.out.println("error: " + critical + " / " + errCount + " / " + num);
+        System.out.println("error: " + errCount + " / " + num);
         map.forEach((k, v) -> System.out.println(k + " : " + v));
     }
 
