@@ -13,7 +13,7 @@ public class DecisionTree {
         long startTime = System.currentTimeMillis();
         DecisionTree tree = builder.build();
         System.out.println("build time: " + (System.currentTimeMillis() - startTime) + "ms.");
-        tree.testData(args[0], Integer.parseInt(args[2]));
+        tree.testData(args[3], Integer.parseInt(args[4]));
     }
 
     private Node root;
@@ -43,6 +43,7 @@ public class DecisionTree {
             if (data == null) {
                 return null;
             }
+            random();
             DecisionTree tree = new DecisionTree();
             Node n = new Node(0);
             n.data = Arrays.asList(data);
@@ -54,6 +55,15 @@ public class DecisionTree {
             return tree;
         }
 
+        private void random() {
+            Random r = new Random();
+            for (int i = 0, j; i < data.length; ++i) {
+                j = r.nextInt(data.length - i) + i;
+                Double[] tmp = data[i];
+                data[i] = data[j];
+                data[j] = tmp;
+            }
+        }
     }
 
     private static class Node extends RecursiveAction {
@@ -209,12 +219,24 @@ public class DecisionTree {
         in.close();
 
         int errCount = 0;
+        int critical = 0;
+        Map<Double, Integer> map = new HashMap<>();
         for (int i = 0; i < num; ++i) {
-            if (testData[i][DIMEN - 1] != classify(testData[i])) {
+            double res = classify(testData[i]);
+            if (testData[i][DIMEN - 1] != res) {
                 ++errCount;
+                if (testData[i][DIMEN - 1] == 1.0) {
+                    ++critical;
+                }
+            }
+            if (map.containsKey(res)) {
+                map.put(res, map.get(res) + 1);
+            } else {
+                map.put(res, 1);
             }
         }
-        System.out.println("error: " + errCount + " / " + num);
+        System.out.println("error: " + critical + " / " + errCount + " / " + num);
+        map.forEach((k, v) -> System.out.println(k + " : " + v));
     }
 
     public double classify(double[] record) {
