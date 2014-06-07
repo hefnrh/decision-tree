@@ -9,11 +9,15 @@ import java.util.concurrent.RecursiveAction;
 public class DecisionTree {
     public static void main(String[] args) throws FileNotFoundException {
         DecisionTreeBuilder builder = new DecisionTreeBuilder();
-        builder.loadData(args[0], Integer.parseInt(args[1]), Integer.parseInt(args[2]));
         long startTime = System.currentTimeMillis();
+        builder.loadData(args[0], Integer.parseInt(args[1]), Integer.parseInt(args[2]));
+        System.out.println("load data time: " + (System.currentTimeMillis() - startTime) + "ms.");
+        startTime = System.currentTimeMillis();
         DecisionTree tree = builder.build();
         System.out.println("build time: " + (System.currentTimeMillis() - startTime) + "ms.");
+        startTime = System.currentTimeMillis();
         tree.testData(args[3], Integer.parseInt(args[4]));
+        System.out.println("classify time: " + (System.currentTimeMillis() - startTime) + "ms.");
     }
 
     private Node root;
