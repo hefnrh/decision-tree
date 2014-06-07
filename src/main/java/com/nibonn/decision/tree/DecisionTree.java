@@ -94,6 +94,9 @@ public class DecisionTree {
             return 1.0 - ret / (size * size);
         }
 
+        /**
+         * count every class has how many instances
+         */
         private void count() {
             if (count == null) {
                 count = new HashMap<>();
@@ -109,6 +112,9 @@ public class DecisionTree {
             });
         }
 
+        /**
+         * make this node a leaf node
+         */
         private void toLeaf() {
             int max = 0;
             for (double k : count.keySet()) {
@@ -120,27 +126,41 @@ public class DecisionTree {
             isLeaf = true;
         }
 
+        /**
+         * make two son node
+         */
         private void split() {
             count();
+            /*
+             early stop for nodes containing only one class or
+             nodes containing less instances than minimum data set size
+             and all attributes have been tested
+              */
             if (count.keySet().size() == 1 ||
                     depth >= data.get(0).length - 1 || data.size() <= MIN_SIZE) {
                 toLeaf();
                 return;
             }
             int pos = findMinGiniSplitPos();
+            /*
+            early stop if all instances has similar attribute
+             */
             if (pos == 0 || pos == data.size()) {
                 toLeaf();
                 return;
             }
+            // clear data used in finding minimum gini split position
             lSon.data.clear();
             rSon.data.clear();
             ListIterator<Double[]> li = data.listIterator();
+            // add instances to son nodes
             for (int i = 0; i < pos; ++i) {
                 lSon.data.add(li.next());
             }
             for (int i = pos, j = data.size(); i < j; ++i) {
                 rSon.data.add(li.next());
             }
+            // recursively split son nodes
             invokeAll(lSon, rSon);
         }
 
@@ -157,6 +177,7 @@ public class DecisionTree {
             double lastDDepth = 0;
             int pos = 0;
             boolean flag = false;
+            // iterate sorted data set to find minimum gini split
             for (int i = 0, j = data.size(); i < j; ++i) {
                 Double[] d = li.next();
                 lSon.data.add(d);
@@ -172,6 +193,7 @@ public class DecisionTree {
                 }
                 double tmp = lSon.gini() * lSon.data.size() + rSon.gini() * rSon.data.size();
                 tmp /= data.size();
+                // calculate threshold
                 if (flag) {
                     threshold = (lastDDepth + d[depth]) / 2.0;
                     flag = false;
@@ -186,6 +208,11 @@ public class DecisionTree {
             return pos;
         }
 
+        /**
+         * sort data set by the depth attribute
+         *
+         * @param depth which attribute used to sort
+         */
         void sort(int depth) {
             Object[] tmpData = data.toArray();
             Arrays.parallelSort(tmpData, (d1, d2) -> ((Double[]) d1)[depth].compareTo(((Double[]) d2)[depth]));
@@ -201,6 +228,11 @@ public class DecisionTree {
             split();
         }
 
+        /**
+         * estimate which son node the record belongs to
+         * @param d the record to classify
+         * @return the node the record belongs to
+         */
         Node belongTo(double[] d) {
             return d[depth] <= threshold ? lSon : rSon;
         }
